@@ -90,6 +90,9 @@ export default function App() {
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
   const [viewerScale, setViewerScale] = useState(1);
+  const [viewerOffset, setViewerOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0 });
   const nextImage = (id: string, total: number) => {
     setCarouselIndex((prev) => ({
       ...prev,
@@ -136,6 +139,8 @@ export default function App() {
   useEffect(() => {
     if (!viewerOpen) {
       setViewerScale(1);
+      setViewerOffset({ x: 0, y: 0 });
+      setIsDragging(false);
     }
   }, [viewerOpen]);
 
@@ -555,6 +560,7 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
                               setViewerImages(imgs);
                               setViewerIndex(index);
                               setViewerScale(1);
+                              setViewerOffset({ x: 0, y: 0 });
                               setViewerOpen(true);
                             }}
                           />
@@ -962,22 +968,90 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
       </footer>
       {viewerOpen && (
         <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 overflow-hidden overscroll-contain"
           onClick={() => setViewerOpen(false)}
+          onWheelCapture={(e) => {
+            if (e.ctrlKey) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            setViewerScale((scale) => {
+              const delta = e.deltaY > 0 ? -0.25 : 0.25;
+              const next = Math.max(1, Math.min(3, Number((scale + delta).toFixed(2))));
+              if (next === 1) {
+                setViewerOffset({ x: 0, y: 0 });
+              }
+              return next === scale ? scale : next;
+            });
+          }}
         >
           <div
             className="relative max-w-5xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="overflow-auto max-h-[85vh] rounded-xl bg-black/10 p-2 sm:p-4">
-              <ImageWithFallback
-                src={viewerImages[viewerIndex]}
-                className="max-w-full h-auto object-contain rounded-xl mx-auto transition-transform duration-200"
-                alt="Vista ampliada de propiedad"
-                loading="eager"
-                decoding="async"
-                style={{ transform: `scale(${viewerScale})`, transformOrigin: "center center" }}
-              />
+            <div
+              className="overflow-hidden max-h-[85vh] rounded-xl bg-black/10 p-2 sm:p-4"
+              onWheel={(e) => {
+                e.preventDefault();
+                if (e.ctrlKey) return;
+
+                setViewerScale((scale) => {
+                  const delta = e.deltaY > 0 ? -0.25 : 0.25;
+                  const next = Math.max(1, Math.min(3, Number((scale + delta).toFixed(2))));
+                  if (next === 1) {
+                    setViewerOffset({ x: 0, y: 0 });
+                  }
+                  return next === scale ? scale : next;
+                });
+              }}
+              onMouseDown={(e) => {
+                if (viewerScale > 1 && e.button === 0) {
+                  setIsDragging(true);
+                  dragStart.current = { x: e.clientX - viewerOffset.x, y: e.clientY - viewerOffset.y };
+                }
+              }}
+              onMouseMove={(e) => {
+                if (!isDragging || viewerScale <= 1) return;
+                setViewerOffset({
+                  x: e.clientX - dragStart.current.x,
+                  y: e.clientY - dragStart.current.y,
+                });
+              }}
+              onMouseUp={() => setIsDragging(false)}
+              onMouseLeave={() => setIsDragging(false)}
+              onTouchStart={(e) => {
+                if (viewerScale > 1 && e.touches[0]) {
+                  setIsDragging(true);
+                  dragStart.current = { x: e.touches[0].clientX - viewerOffset.x, y: e.touches[0].clientY - viewerOffset.y };
+                }
+              }}
+              onTouchMove={(e) => {
+                if (!isDragging || viewerScale <= 1 || !e.touches[0]) return;
+                setViewerOffset({
+                  x: e.touches[0].clientX - dragStart.current.x,
+                  y: e.touches[0].clientY - dragStart.current.y,
+                });
+              }}
+              onTouchEnd={() => setIsDragging(false)}
+            >
+              <div
+                className="flex min-h-[60vh] items-center justify-center"
+                style={{ cursor: viewerScale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+              >
+                <ImageWithFallback
+                  src={viewerImages[viewerIndex]}
+                  className="max-w-full max-h-[75vh] h-auto object-contain rounded-xl mx-auto transition-transform duration-200"
+                  alt="Vista ampliada de propiedad"
+                  loading="eager"
+                  decoding="async"
+                  style={{
+                    transform: `translate(${viewerOffset.x}px, ${viewerOffset.y}px) scale(${viewerScale})`,
+                    transformOrigin: 'center center',
+                    maxWidth: '100%',
+                    maxHeight: '75vh',
+                  }}
+                />
+              </div>
             </div>
 
             <div className="absolute top-4 right-4 flex items-center gap-2 rounded-full bg-black/60 p-2 backdrop-blur-sm">
@@ -985,7 +1059,12 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setViewerScale((scale) => Math.min(3, Number((scale + 0.25).toFixed(2))));
+                  setViewerScale((scale) => {
+                    const next = Math.min(3, Number((scale + 0.25).toFixed(2)));
+                    if (next === scale) return scale;
+                    setViewerOffset({ x: 0, y: 0 });
+                    return next;
+                  });
                 }}
                 className="rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white"
                 aria-label="Acercar"
@@ -996,7 +1075,12 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setViewerScale((scale) => Math.max(1, Number((scale - 0.25).toFixed(2))));
+                  setViewerScale((scale) => {
+                    const next = Math.max(1, Number((scale - 0.25).toFixed(2)));
+                    if (next === scale) return scale;
+                    if (next === 1) setViewerOffset({ x: 0, y: 0 });
+                    return next;
+                  });
                 }}
                 className="rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white"
                 aria-label="Alejar"
@@ -1008,6 +1092,7 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
                 onClick={(e) => {
                   e.stopPropagation();
                   setViewerScale(1);
+                  setViewerOffset({ x: 0, y: 0 });
                 }}
                 className="rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white"
                 aria-label="Restablecer zoom"
@@ -1035,6 +1120,7 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
                     e.stopPropagation();
                     setViewerIndex((viewerIndex - 1 + viewerImages.length) % viewerImages.length);
                     setViewerScale(1);
+                    setViewerOffset({ x: 0, y: 0 });
                   }}
                   className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white shadow hover:bg-black/70"
                   aria-label="Imagen anterior"
@@ -1048,6 +1134,7 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
                     e.stopPropagation();
                     setViewerIndex((viewerIndex + 1) % viewerImages.length);
                     setViewerScale(1);
+                    setViewerOffset({ x: 0, y: 0 });
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white shadow hover:bg-black/70"
                   aria-label="Imagen siguiente"
