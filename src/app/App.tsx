@@ -991,6 +991,7 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
           >
             <div
               className="overflow-hidden max-h-[85vh] rounded-xl bg-black/10 p-2 sm:p-4"
+              style={{ touchAction: 'none' }}
               onWheel={(e) => {
                 e.preventDefault();
                 if (e.ctrlKey) return;
@@ -1004,35 +1005,34 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
                   return next === scale ? scale : next;
                 });
               }}
-              onMouseDown={(e) => {
-                if (viewerScale > 1 && e.button === 0) {
+              onPointerDown={(e) => {
+                if (viewerScale > 1 && (e.button === 0 || e.pointerType === 'touch')) {
+                  e.preventDefault();
                   setIsDragging(true);
                   dragStart.current = { x: e.clientX - viewerOffset.x, y: e.clientY - viewerOffset.y };
+                  e.currentTarget.setPointerCapture(e.pointerId);
                 }
               }}
-              onMouseMove={(e) => {
+              onPointerMove={(e) => {
                 if (!isDragging || viewerScale <= 1) return;
                 setViewerOffset({
                   x: e.clientX - dragStart.current.x,
                   y: e.clientY - dragStart.current.y,
                 });
               }}
-              onMouseUp={() => setIsDragging(false)}
-              onMouseLeave={() => setIsDragging(false)}
-              onTouchStart={(e) => {
-                if (viewerScale > 1 && e.touches[0]) {
-                  setIsDragging(true);
-                  dragStart.current = { x: e.touches[0].clientX - viewerOffset.x, y: e.touches[0].clientY - viewerOffset.y };
+              onPointerUp={(e) => {
+                if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
                 }
+                setIsDragging(false);
               }}
-              onTouchMove={(e) => {
-                if (!isDragging || viewerScale <= 1 || !e.touches[0]) return;
-                setViewerOffset({
-                  x: e.touches[0].clientX - dragStart.current.x,
-                  y: e.touches[0].clientY - dragStart.current.y,
-                });
+              onPointerCancel={(e) => {
+                if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                  e.currentTarget.releasePointerCapture(e.pointerId);
+                }
+                setIsDragging(false);
               }}
-              onTouchEnd={() => setIsDragging(false)}
+              onPointerLeave={() => setIsDragging(false)}
             >
               <div
                 className="flex min-h-[60vh] items-center justify-center"
