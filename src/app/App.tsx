@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
 import { Building2, Home, Key, Phone, Mail, MapPin, CircleDollarSign, ExternalLink, Globe, Search, Plus, Minus, RotateCcw } from "lucide-react";
-import { FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
+import { FaInstagram, FaFacebook, FaTiktok, FaWhatsapp } from "react-icons/fa";
 import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
 function resolveAssetUrl(path: string) {
@@ -19,6 +19,7 @@ function resolveAssetUrl(path: string) {
 
 const logoUrl = resolveAssetUrl("/images/logotransparente.png");
 const testEnable = import.meta.env.VITE_TEST_ENABLE === "true";
+const whatsappUrl = import.meta.env.VITE_WHATSAPP_URL || "https://wa.me/56900000000";
 
 type Propiedad = {
   id: string;
@@ -966,6 +967,16 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
           <p className="text-sm opacity-90">© 2026 FerMax Propiedades. Todos los derechos reservados.</p>
         </div>
       </footer>
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Contactar por WhatsApp"
+        className="fixed bottom-4 right-4 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.35)] transition hover:scale-105 hover:bg-[#1DA851]"
+      >
+        <FaWhatsapp className="h-7 w-7" />
+      </a>
+
       {viewerOpen && (
         <div
           className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 overflow-hidden overscroll-contain"
