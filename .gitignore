@@ -1,0 +1,39 @@
+# Dependencias (PNPM, NPM, Yarn)
+node_modules/
+.pnpm-debug.log*
+
+# Compilación y producción (Vite)
+dist/
+dist-ssr/
+*.local
+
+# Cachés y herramientas de desarrollo
+.cache/
+.vite/
+.eslintcache
+
+# Variables de entorno (¡Seguridad!)
+.env
+.env.local
+.env.*.local
+
+# Archivos específicos de Windows
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Logs de errores
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editores de código (VS Code, JetBrains)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
