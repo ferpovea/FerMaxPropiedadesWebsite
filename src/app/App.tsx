@@ -972,9 +972,9 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Contactar por WhatsApp"
-        className="fixed bottom-4 right-4 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.35)] transition hover:scale-105 hover:bg-[#1DA851]"
+        className="fixed bottom-4 right-4 z-[70] flex h-16 w-16 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_8px_24px_rgba(37,211,102,0.35)] transition hover:scale-105 hover:bg-[#1DA851] sm:h-16 sm:w-16 md:h-18 md:w-18"
       >
-        <FaWhatsapp className="h-7 w-7" />
+        <FaWhatsapp className="h-8 w-8 md:h-9 md:w-9" />
       </a>
 
       {viewerOpen && (
