@@ -1,11 +1,23 @@
 import React, { useEffect, useRef, useState } from "react";
 import emailjs from "@emailjs/browser";
-import { Building2, Home, Key, Phone, Mail, MapPin, CircleDollarSign, ExternalLink, Globe } from "lucide-react";
+import { Building2, Home, Key, Phone, Mail, MapPin, CircleDollarSign, ExternalLink, Globe, Search, Plus, Minus, RotateCcw } from "lucide-react";
 import { FaInstagram, FaFacebook, FaTiktok } from "react-icons/fa";
+import { ImageWithFallback } from "./components/figma/ImageWithFallback";
 
+function resolveAssetUrl(path: string) {
+  if (!path) return "";
+  if (/^(https?:)?\/\//i.test(path) || path.startsWith("data:")) {
+    return path;
+  }
 
-//const logoUrl = "/images/logotransparente.png";
-const logoUrl = `${import.meta.env.BASE_URL}images/logotransparente.png`;
+  const base = (import.meta.env.VITE_ASSETS_URL || import.meta.env.BASE_URL || "/").toString();
+  const cleanBase = base.endsWith("/") ? base : `${base}/`;
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+
+  return `${cleanBase}${cleanPath}`;
+}
+
+const logoUrl = resolveAssetUrl("/images/logotransparente.png");
 const testEnable = import.meta.env.VITE_TEST_ENABLE === "true";
 
 type Propiedad = {
@@ -77,6 +89,7 @@ export default function App() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [viewerScale, setViewerScale] = useState(1);
   const nextImage = (id: string, total: number) => {
     setCarouselIndex((prev) => ({
       ...prev,
@@ -119,6 +132,12 @@ export default function App() {
 
     load();
   }, []);
+
+  useEffect(() => {
+    if (!viewerOpen) {
+      setViewerScale(1);
+    }
+  }, [viewerOpen]);
 
   useEffect(() => {
     const header = document.getElementById("header");
@@ -207,7 +226,7 @@ export default function App() {
       <div
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: "url(/images/fondo.png)",
+          backgroundImage: `url(${resolveAssetUrl("/images/fondo.webp")})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -228,7 +247,15 @@ export default function App() {
         >
           <div className="flex items-center justify-between h-16 px-6">
             {/* Logo */}
-            <img src={logoUrl} alt="FerMax Propiedades" className="h-8" />
+            <ImageWithFallback
+              src={logoUrl}
+              alt="FerMax Propiedades"
+              className="h-8 w-auto"
+              width={120}
+              height={32}
+              loading="eager"
+              decoding="async"
+            />
 
             {/* Menu */}
             <div className="hidden md:flex gap-8 text-sm font-medium text-gray-700">
@@ -314,10 +341,14 @@ export default function App() {
         <div className="relative z-10 flex justify-center">
           <div className="w-full max-w-4xl bg-white/60 rounded-3xl border border-gray-200/60 shadow-xl backdrop-blur-[2px] px-10 py-14 text-center">
 
-            <img
+            <ImageWithFallback
               src={logoUrl}
               alt="FerMax Propiedades"
-              className="h-44 mx-auto mb-10 drop-shadow-sm"
+              className="h-44 mx-auto mb-10 drop-shadow-sm w-auto"
+              width={320}
+              height={176}
+              loading="eager"
+              decoding="async"
             />
 
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold mb-6 text-primary tracking-tight">
@@ -514,13 +545,16 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
 
                       return (
                         <div className="relative w-full h-72 md:h-80 overflow-hidden">
-                          <img
+                          <ImageWithFallback
                             src={imgs[index]}
                             alt={p.titulo}
                             className="w-full h-full object-cover cursor-pointer"
+                            loading="lazy"
+                            decoding="async"
                             onClick={() => {
                               setViewerImages(imgs);
                               setViewerIndex(index);
+                              setViewerScale(1);
                               setViewerOpen(true);
                             }}
                           />
@@ -914,56 +948,113 @@ focus:outline-none focus:ring-2 focus:ring-primary p-8"
       {/* Footer */}
       <footer className="bg-primary text-white py-8 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto text-center">
-          <img src={logoUrl} alt="FerMax Propiedades" className="h-12 mx-auto mb-4 brightness-0 invert" />
+          <ImageWithFallback
+            src={logoUrl}
+            alt="FerMax Propiedades"
+            className="h-12 mx-auto mb-4 brightness-0 invert w-auto"
+            width={160}
+            height={48}
+            loading="eager"
+            decoding="async"
+          />
           <p className="text-sm opacity-90">© 2026 FerMax Propiedades. Todos los derechos reservados.</p>
         </div>
       </footer>
       {viewerOpen && (
         <div
-          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center"
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
           onClick={() => setViewerOpen(false)}
         >
           <div
-            className="relative max-w-5xl w-full px-6"
+            className="relative max-w-5xl w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={viewerImages[viewerIndex]}
-              className="w-full max-h-[80vh] object-contain rounded-xl"
-            />
+            <div className="overflow-auto max-h-[85vh] rounded-xl bg-black/10 p-2 sm:p-4">
+              <ImageWithFallback
+                src={viewerImages[viewerIndex]}
+                className="max-w-full h-auto object-contain rounded-xl mx-auto transition-transform duration-200"
+                alt="Vista ampliada de propiedad"
+                loading="eager"
+                decoding="async"
+                style={{ transform: `scale(${viewerScale})`, transformOrigin: "center center" }}
+              />
+            </div>
 
-            {/* cerrar */}
-            <button
-              onClick={() => setViewerOpen(false)}
-              className="absolute top-4 right-4 text-white text-3xl"
-            >
-              ✕
-            </button>
-
-            {/* anterior */}
-            {viewerImages.length > 1 && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 rounded-full bg-black/60 p-2 backdrop-blur-sm">
               <button
-                onClick={() =>
-                  setViewerIndex(
-                    (viewerIndex - 1 + viewerImages.length) % viewerImages.length
-                  )
-                }
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewerScale((scale) => Math.min(3, Number((scale + 0.25).toFixed(2))));
+                }}
+                className="rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white"
+                aria-label="Acercar"
               >
-                ‹
+                <Plus className="h-4 w-4" />
               </button>
-            )}
-
-            {/* siguiente */}
-            {viewerImages.length > 1 && (
               <button
-                onClick={() =>
-                  setViewerIndex((viewerIndex + 1) % viewerImages.length)
-                }
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewerScale((scale) => Math.max(1, Number((scale - 0.25).toFixed(2))));
+                }}
+                className="rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white"
+                aria-label="Alejar"
               >
-                ›
+                <Minus className="h-4 w-4" />
               </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewerScale(1);
+                }}
+                className="rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white"
+                aria-label="Restablecer zoom"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewerOpen(false);
+                }}
+                className="rounded-full bg-white/90 p-2 text-gray-800 shadow hover:bg-white"
+                aria-label="Cerrar vista ampliada"
+              >
+                <span className="text-lg leading-none">✕</span>
+              </button>
+            </div>
+
+            {viewerImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewerIndex((viewerIndex - 1 + viewerImages.length) % viewerImages.length);
+                    setViewerScale(1);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white shadow hover:bg-black/70"
+                  aria-label="Imagen anterior"
+                >
+                  ‹
+                </button>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewerIndex((viewerIndex + 1) % viewerImages.length);
+                    setViewerScale(1);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white shadow hover:bg-black/70"
+                  aria-label="Imagen siguiente"
+                >
+                  ›
+                </button>
+              </>
             )}
           </div>
         </div>
