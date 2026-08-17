@@ -1,5 +1,0 @@
-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
-
-
-git config --global user.name "ferpovea"
-git config --global user.email "ferpovea@gmail.com"
